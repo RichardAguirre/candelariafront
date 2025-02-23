@@ -212,13 +212,13 @@ export const UserManagement = () => {
             <h2 className="text-xl mb-4">Editar Usuario</h2>
             <form onSubmit={handleSubmitEditUser(handleEditUser)}>
               <div className="space-y-4">
-                <input {...registerEditUser('nombreuno')} placeholder="Primer nombre" className="input-field" />
-                <input {...registerEditUser('nombredos')} placeholder="Segundo nombre" className="input-field" />
-                <input {...registerEditUser('apellidouno')} placeholder="Primer apellido" className="input-field" />
-                <input {...registerEditUser('apellidodos')} placeholder="Segundo apellido" className="input-field" />
-                <input {...registerEditUser('email')} type="email" placeholder="Email" className="input-field" />
-                <input {...registerEditUser('celular')} type="number" placeholder="Celular" className="input-field" />
-                <input {...registerEditUser('fechanac')} type="date" className="input-field" />
+                <input {...registerEditUser('nombreuno')} placeholder="Primer nombre" className={inputFieldStyle} />
+                <input {...registerEditUser('nombredos')} placeholder="Segundo nombre" className={inputFieldStyle} />
+                <input {...registerEditUser('apellidouno')} placeholder="Primer apellido" className={inputFieldStyle} />
+                <input {...registerEditUser('apellidodos')} placeholder="Segundo apellido" className={inputFieldStyle} />
+                <input {...registerEditUser('email')} type="email" placeholder="Email" className={inputFieldStyle} />
+                <input {...registerEditUser('celular')} type="number" placeholder="Celular" className={inputFieldStyle} />
+                <input {...registerEditUser('fechanac')} type="date" className={inputFieldStyle} />
               </div>
               <div className="mt-4 flex justify-end space-x-2">
                 <Button type="button" onClick={() => setShowEditModal(false)}>
@@ -239,12 +239,12 @@ export const UserManagement = () => {
             <h2 className="text-xl mb-4">Editar Credenciales</h2>
             <form onSubmit={handleSubmitCredentials(handleEditCredentials)}>
               <div className="space-y-4">
-                <input {...registerCredentials('username')} placeholder="Usuario" className="input-field" />
+                <input {...registerCredentials('username')} placeholder="Usuario" className={inputFieldStyle} />
                 <input
                   {...registerCredentials('password')}
                   type="password"
                   placeholder="Nueva contraseña"
-                  className="input-field"
+                  className={inputFieldStyle}
                 />
               </div>
               <div className="mt-4 flex justify-end space-x-2">

@@ -6,7 +6,6 @@ import { AuthRoute } from './components/common/AuthRoute';
 import { LoginForm } from './components/auth/LoginForm';
 import { RegisterForm } from './components/auth/RegisterForm';
 import { UserManagement } from './components/auth/UserManagement';
-import { LoadingScreen } from './components/common/LoadingScreen';
 import './styles/styles.css';
 
 export default function App() {
@@ -14,7 +13,7 @@ export default function App() {
     <AuthProvider>
       <Router>
         <Routes>
-          <Route path="/" element={<LoadingScreen />} />
+          <Route path="/" element={<LoginForm />} />
 
           <Route element={<AuthRoute />}>
             <Route path="/login" element={<LoginForm />} />
