@@ -136,11 +136,6 @@ export const UserManagement = () => {
 
   return (
     <div className="flex flex-col items-center justify-center w-screen h-screen bg-gray-100 text-black">
-      <form onSubmit={handleSubmit(() => navigate('/register'))} className="text-center">
-        <Button type="submit" className="bg-purple-600 hover:bg-purple-700">
-          Crear Usuario
-        </Button>
-      </form>
 
       <div className="mt-8 w-full max-w-6xl overflow-x-auto">
         <table className="w-full bg-white border-collapse">
@@ -173,7 +168,7 @@ export const UserManagement = () => {
                 <td>
                   <div className="flex space-x-2 justify-center">
                     <Button
-                      className="bg-yellow-500 hover:bg-yellow-600"
+                      className="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded"
                       onClick={() => {
                         setSelectedUser(user);
                         reset(user);
@@ -183,7 +178,7 @@ export const UserManagement = () => {
                       Editar
                     </Button>
                     <Button
-                      className="bg-blue-500 hover:bg-blue-600"
+                      className="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded"
                       onClick={() => {
                         setSelectedUser(user);
                         resetCredentials({ username: user.username, password: '' });
@@ -193,7 +188,7 @@ export const UserManagement = () => {
                       Credenciales
                     </Button>
                     <Button
-                      className={user.estado === 1 ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600'}
+                      className={user.estado === 1 ? 'bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded' : 'bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded'}
                       onClick={() => toggleUserStatus(user)}
                     >
                       {user.estado === 1 ? 'Desactivar' : 'Activar'}
