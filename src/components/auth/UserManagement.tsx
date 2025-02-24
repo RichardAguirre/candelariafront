@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import { useNavigate } from 'react-router-dom';
-import { Button } from '../common/Button';
+import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { useNavigate } from "react-router-dom";
+import { Button } from "../common/Button";
 
 interface User {
   documento: number;
@@ -26,8 +26,16 @@ export const UserManagement = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showCredentialsModal, setShowCredentialsModal] = useState(false);
 
-  const { register: registerEditUser, handleSubmit: handleSubmitEditUser, reset } = useForm<User>();
-  const { register: registerCredentials, handleSubmit: handleSubmitCredentials, reset: resetCredentials } = useForm<{
+  const {
+    register: registerEditUser,
+    handleSubmit: handleSubmitEditUser,
+    reset,
+  } = useForm<User>();
+  const {
+    register: registerCredentials,
+    handleSubmit: handleSubmitCredentials,
+    reset: resetCredentials,
+  } = useForm<{
     username?: string;
     password: string;
   }>();
@@ -38,71 +46,90 @@ export const UserManagement = () => {
 
   const fetchUsers = async () => {
     try {
-      const response = await fetch('/api/api/v1/usuario/consultaAllUsuario');
+      const response = await fetch("/api/api/v1/usuario/consultaAllUsuario");
       if (!response.ok) throw new Error(`Error: ${response.status}`);
-      
+
       const data: User[] = await response.json();
+
       const usersWithAccess = await Promise.all(
         data.map(async (user) => {
           try {
-            const accessResponse = await fetch('/api/api/v1/acceso/datosAcceso', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ documento: user.documento }),
-            });
-            
-            const accessData = accessResponse.ok ? await accessResponse.json() : {};
-            return { ...user, perfil: accessData.perfil || 'N/A', username: accessData.username || 'N/A' };
+            const accessResponse = await fetch(
+              "/api/api/v1/acceso/datosAcceso",
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ documento: user.documento }),
+              }
+            );
+
+            const accessData = accessResponse.ok
+              ? await accessResponse.json()
+              : {};
+            return {
+              ...user,
+              perfil: accessData.perfil || "N/A",
+              username: accessData.username || "N/A",
+              estado: accessData.estado ?? null,
+            };
           } catch (error) {
-            return { ...user, perfil: 'N/A', username: 'N/A' };
+            return {
+              ...user,
+              perfil: "N/A",
+              username: "N/A",
+              estado: null,
+            };
           }
         })
       );
       setUsers(usersWithAccess);
     } catch (error) {
       console.error(error);
-      alert('Error cargando usuarios');
+      alert("Error cargando usuarios");
     }
   };
 
   const handleEditUser = async (data: User) => {
     try {
-      const response = await fetch('/api/api/v1/usuario/modificarUsuario', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/api/v1/usuario/modificarUsuario", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...data,
           documento: selectedUser?.documento,
         }),
       });
-      
-      if (!response.ok) throw new Error('Error actualizando usuario');
+
+      if (!response.ok) throw new Error("Error actualizando usuario");
       await fetchUsers();
       setShowEditModal(false);
     } catch (error) {
       console.error(error);
-      alert('Error actualizando usuario');
+      alert("Error actualizando usuario");
     }
   };
 
-  const handleEditCredentials = async (data: { username?: string; password: string }) => {
+  const handleEditCredentials = async (data: {
+    username?: string;
+    password: string;
+  }) => {
     try {
-      const response = await fetch('/api/api/v1/acceso/modificaAcceso', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/api/v1/acceso/modificaAcceso", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           documento: { documento: selectedUser?.documento },
           username: data.username,
           password: data.password,
         }),
       });
-      
-      if (!response.ok) throw new Error('Error actualizando credenciales');
+
+      if (!response.ok) throw new Error("Error actualizando credenciales");
       await fetchUsers();
       setShowCredentialsModal(false);
     } catch (error) {
       console.error(error);
-      alert('Error actualizando credenciales');
+      alert("Error actualizando credenciales");
     }
   };
 
@@ -111,20 +138,22 @@ export const UserManagement = () => {
     const confirmation = window.confirm(
       `¿Estás seguro de ${isActive ? 'desactivar' : 'activar'} este usuario?`
     );
-
+  
     if (confirmation) {
       try {
-        const url = isActive ? '/api/api/v1/acceso/eliminarAcceso' : '/api/api/v1/usuario/activarUsuario';
+        const url = isActive 
+          ? '/api/api/v1/acceso/eliminarAcceso' 
+          : '/api/api/v1/acceso/activarUsuario';
+        
         const body = isActive
-          ? JSON.stringify({ documento: { documento: user.documento }, username: user.username })
+          ? JSON.stringify({ documento: { documento: user.documento } })
           : JSON.stringify({ documento: user.documento });
-
         const response = await fetch(url, {
-          method: 'POST',
+          method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body,
         });
-
+  
         if (!response.ok) throw new Error(`Error ${isActive ? 'desactivando' : 'activando'} usuario`);
         await fetchUsers();
       } catch (error) {
@@ -133,10 +162,10 @@ export const UserManagement = () => {
       }
     }
   };
+  
 
   return (
     <div className="flex flex-col items-center justify-center w-screen h-screen bg-gray-100 text-black">
-
       <div className="mt-8 w-full max-w-6xl overflow-x-auto">
         <table className="w-full bg-white border-collapse">
           <thead>
@@ -160,8 +189,12 @@ export const UserManagement = () => {
                 <td>{user.email}</td>
                 <td>{user.celular}</td>
                 <td>{user.fechasys}</td>
-                <td className={user.estado === 1 ? 'text-green-500' : 'text-red-500'}>
-                  {user.estado === 1 ? 'Activo' : 'Inactivo'}
+                <td
+                  className={
+                    user.estado === 1 ? "text-green-500" : "text-red-500"
+                  }
+                >
+                  {user.estado === 1 ? "Activo" : "Inactivo"}
                 </td>
                 <td>{user.perfil}</td>
                 <td>{user.username}</td>
@@ -181,17 +214,24 @@ export const UserManagement = () => {
                       className="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded"
                       onClick={() => {
                         setSelectedUser(user);
-                        resetCredentials({ username: user.username, password: '' });
+                        resetCredentials({
+                          username: user.username,
+                          password: "",
+                        });
                         setShowCredentialsModal(true);
                       }}
                     >
                       Credenciales
                     </Button>
                     <Button
-                      className={user.estado === 1 ? 'bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded' : 'bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded'}
+                      className={
+                        user.estado === 1
+                          ? "bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded"
+                          : "bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded"
+                      }
                       onClick={() => toggleUserStatus(user)}
                     >
-                      {user.estado === 1 ? 'Desactivar' : 'Activar'}
+                      {user.estado === 1 ? "Desactivar" : "Activar"}
                     </Button>
                   </div>
                 </td>
@@ -207,13 +247,43 @@ export const UserManagement = () => {
             <h2 className="text-xl mb-4">Editar Usuario</h2>
             <form onSubmit={handleSubmitEditUser(handleEditUser)}>
               <div className="space-y-4">
-                <input {...registerEditUser('nombreuno')} placeholder="Primer nombre" className={inputFieldStyle} />
-                <input {...registerEditUser('nombredos')} placeholder="Segundo nombre" className={inputFieldStyle} />
-                <input {...registerEditUser('apellidouno')} placeholder="Primer apellido" className={inputFieldStyle} />
-                <input {...registerEditUser('apellidodos')} placeholder="Segundo apellido" className={inputFieldStyle} />
-                <input {...registerEditUser('email')} type="email" placeholder="Email" className={inputFieldStyle} />
-                <input {...registerEditUser('celular')} type="number" placeholder="Celular" className={inputFieldStyle} />
-                <input {...registerEditUser('fechanac')} type="date" className={inputFieldStyle} />
+                <input
+                  {...registerEditUser("nombreuno")}
+                  placeholder="Primer nombre"
+                  className={inputFieldStyle}
+                />
+                <input
+                  {...registerEditUser("nombredos")}
+                  placeholder="Segundo nombre"
+                  className={inputFieldStyle}
+                />
+                <input
+                  {...registerEditUser("apellidouno")}
+                  placeholder="Primer apellido"
+                  className={inputFieldStyle}
+                />
+                <input
+                  {...registerEditUser("apellidodos")}
+                  placeholder="Segundo apellido"
+                  className={inputFieldStyle}
+                />
+                <input
+                  {...registerEditUser("email")}
+                  type="email"
+                  placeholder="Email"
+                  className={inputFieldStyle}
+                />
+                <input
+                  {...registerEditUser("celular")}
+                  type="number"
+                  placeholder="Celular"
+                  className={inputFieldStyle}
+                />
+                <input
+                  {...registerEditUser("fechanac")}
+                  type="date"
+                  className={inputFieldStyle}
+                />
               </div>
               <div className="mt-4 flex justify-end space-x-2">
                 <Button type="button" onClick={() => setShowEditModal(false)}>
@@ -234,16 +304,23 @@ export const UserManagement = () => {
             <h2 className="text-xl mb-4">Editar Credenciales</h2>
             <form onSubmit={handleSubmitCredentials(handleEditCredentials)}>
               <div className="space-y-4">
-                <input {...registerCredentials('username')} placeholder="Usuario" className={inputFieldStyle} />
                 <input
-                  {...registerCredentials('password')}
+                  {...registerCredentials("username")}
+                  placeholder="Usuario"
+                  className={inputFieldStyle}
+                />
+                <input
+                  {...registerCredentials("password")}
                   type="password"
                   placeholder="Nueva contraseña"
                   className={inputFieldStyle}
                 />
               </div>
               <div className="mt-4 flex justify-end space-x-2">
-                <Button type="button" onClick={() => setShowCredentialsModal(false)}>
+                <Button
+                  type="button"
+                  onClick={() => setShowCredentialsModal(false)}
+                >
                   Cancelar
                 </Button>
                 <Button type="submit" className="bg-green-500">
@@ -258,4 +335,5 @@ export const UserManagement = () => {
   );
 };
 
-const inputFieldStyle = "w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500";
+const inputFieldStyle =
+  "w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500";

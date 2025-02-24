@@ -73,6 +73,13 @@ export const LoginForm = () => {
     }
   };
 
+  const generateRandomPassword = (length = 10) => {
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    return Array.from(crypto.getRandomValues(new Uint8Array(length)))
+      .map((x) => chars[x % chars.length])
+      .join('');
+  };
+
   const handlePasswordReset = async (data: ResetPasswordData) => {
     try {
       const userResponse = await fetch("/api/api/v1/usuario/consultaUsuarioByDocumento", {
@@ -80,40 +87,52 @@ export const LoginForm = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ documento: data.documento }),
       });
-
+  
       if (!userResponse.ok) throw new Error("Documento no registrado");
-      
+  
       const userData: UserResponse = await userResponse.json();
       setUserEmail(userData.email);
-
-      const newPassword = Array.from(crypto.getRandomValues(new Uint32Array(10)))
-        .map((x) => (x % 36).toString(36))
-        .join('');
-
+  
+      const usernameResponse = await fetch("/api/api/v1/acceso/datosAcceso", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ documento: data.documento }),
+      });
+  
+      if (!usernameResponse.ok) throw new Error("No se pudo obtener el username");
+  
+      const usernameData: { username: string } = await usernameResponse.json();
+      
+      const newPassword = generateRandomPassword();
+  
       const resetResponse = await fetch("/api/api/v1/acceso/olvidoPassword", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          username: data.documento.toString(),
+          username: usernameData.username,
           password: newPassword,
           documento: { email: userData.email }
         }),
       });
-
+  
       if (!resetResponse.ok) throw new Error("Error al restablecer contraseña");
-      
+
       setResetSuccess(true);
+      alert(`La nueva contraseña ha sido enviada a tu correo registrado`);
+      /* alert(`La nueva contraseña ha sido enviada a ${userData.email}`); */
+  
       setTimeout(() => {
         setShowResetModal(false);
         resetResetForm();
         setResetSuccess(false);
       }, 3000);
-
+  
     } catch (err) {
       setLocalError(err instanceof Error ? err.message : "Error desconocido");
       setTimeout(() => setLocalError(""), 5000);
     }
   };
+  
 
   return (
     <div className="flex w-screen h-screen">
