@@ -288,10 +288,10 @@ export const UserManagement = () => {
                 />
               </div>
               <div className="mt-4 flex justify-end space-x-2">
-                <Button type="button" onClick={() => setShowEditModal(false)}>
+                <Button type="button" onClick={() => setShowEditModal(false)} className="bg-green-500 text-white font-bold py-2 px-4 rounded">
                   Cancelar
                 </Button>
-                <Button type="submit" className="bg-green-500">
+                <Button type="submit" className="bg-green-500 text-white font-bold py-2 px-4 rounded">
                   Guardar
                 </Button>
               </div>
@@ -325,7 +325,7 @@ export const UserManagement = () => {
                 >
                   Cancelar
                 </Button>
-                <Button type="submit" className="bg-green-500">
+                <Button type="submit" className="bg-green-500 text-white font-bold py-2 px-4 rounded">
                   Guardar
                 </Button>
               </div>
