@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { useNavigate } from "react-router-dom";
+/* import { useNavigate } from "react-router-dom"; */
 import { Button } from "../common/Button";
 
 interface User {
@@ -19,8 +19,8 @@ interface User {
 }
 
 export const UserManagement = () => {
-  const { handleSubmit } = useForm();
-  const navigate = useNavigate();
+  /*   const { handleSubmit } = useForm();
+  const navigate = useNavigate(); */
   const [users, setUsers] = useState<User[]>([]);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -34,7 +34,7 @@ export const UserManagement = () => {
   const {
     register: registerCredentials,
     handleSubmit: handleSubmitCredentials,
-    reset: resetCredentials,
+    /* reset: resetCredentials, */
   } = useForm<{
     username?: string;
     password: string;
@@ -136,33 +136,35 @@ export const UserManagement = () => {
   const toggleUserStatus = async (user: User) => {
     const isActive = user.estado === 1;
     const confirmation = window.confirm(
-      `¿Estás seguro de ${isActive ? 'desactivar' : 'activar'} este usuario?`
+      `¿Estás seguro de ${isActive ? "desactivar" : "activar"} este usuario?`
     );
-  
+
     if (confirmation) {
       try {
-        const url = isActive 
-          ? '/api/api/v1/acceso/eliminarAcceso' 
-          : '/api/api/v1/acceso/activarUsuario';
-        
+        const url = isActive
+          ? "/api/api/v1/acceso/eliminarAcceso"
+          : "/api/api/v1/acceso/activarUsuario";
+
         const body = isActive
           ? JSON.stringify({ documento: { documento: user.documento } })
           : JSON.stringify({ documento: user.documento });
         const response = await fetch(url, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
           body,
         });
-  
-        if (!response.ok) throw new Error(`Error ${isActive ? 'desactivando' : 'activando'} usuario`);
+
+        if (!response.ok)
+          throw new Error(
+            `Error ${isActive ? "desactivando" : "activando"} usuario`
+          );
         await fetchUsers();
       } catch (error) {
         console.error(error);
-        alert(`Error ${isActive ? 'desactivando' : 'activando'} usuario`);
+        alert(`Error ${isActive ? "desactivando" : "activando"} usuario`);
       }
     }
   };
-  
 
   return (
     <div className="flex flex-col items-center justify-center w-screen h-screen bg-gray-100 text-black">
@@ -170,34 +172,34 @@ export const UserManagement = () => {
         <table className="w-full bg-white border-collapse">
           <thead>
             <tr className="bg-blue-500 text-white">
-              <th className="p-3">Documento</th>
-              <th>Nombre Completo</th>
-              <th>Email</th>
-              <th>Celular</th>
-              <th>Fecha Creación</th>
-              <th>Estado</th>
-              <th>Perfil</th>
-              <th>Usuario</th>
-              <th>Acciones</th>
+              <th className="p-2">Documento</th>
+              <th className="p-2">Nombre Completo</th>
+              <th className="p-2">Email</th>
+              <th className="p-2">Celular</th>
+              <th className="p-2">Fecha Creación</th>
+              <th className="p-2">Estado</th>
+              <th className="p-2">Perfil</th>
+              <th className="p-2">Usuario</th>
+              <th className="p-2">Acciones</th>
             </tr>
           </thead>
           <tbody>
             {users.map((user) => (
               <tr key={user.documento} className="hover:bg-gray-50 border-t">
-                <td className="p-3">{user.documento}</td>
-                <td>{`${user.nombreuno} ${user.nombredos} ${user.apellidouno} ${user.apellidodos}`}</td>
-                <td>{user.email}</td>
-                <td>{user.celular}</td>
-                <td>{user.fechasys}</td>
+                <td className="p-2">{user.documento}</td>
+                <td className="p-2">{`${user.nombreuno} ${user.nombredos} ${user.apellidouno} ${user.apellidodos}`}</td>
+                <td className="p-2">{user.email}</td>
+                <td className="p-2">{user.celular}</td>
+                <td className="p-2">{user.fechasys}</td>
                 <td
-                  className={
+                  className={`p-4 ${
                     user.estado === 1 ? "text-green-500" : "text-red-500"
-                  }
+                  }`}
                 >
                   {user.estado === 1 ? "Activo" : "Inactivo"}
                 </td>
-                <td>{user.perfil}</td>
-                <td>{user.username}</td>
+                <td className="p-2">{user.perfil}</td>
+                <td className="p-2">{user.username}</td>
                 <td>
                   <div className="flex space-x-2 justify-center">
                     <Button
@@ -210,7 +212,7 @@ export const UserManagement = () => {
                     >
                       Editar
                     </Button>
-                    <Button
+                    {/*                     <Button
                       className="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded"
                       onClick={() => {
                         setSelectedUser(user);
@@ -222,7 +224,7 @@ export const UserManagement = () => {
                       }}
                     >
                       Credenciales
-                    </Button>
+                    </Button> */}
                     <Button
                       className={
                         user.estado === 1
@@ -297,7 +299,7 @@ export const UserManagement = () => {
           </div>
         </div>
       )}
-
+      {/* TODO: pendiente crear endpoint para restablecer contraseña */}
       {showCredentialsModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
           <div className="bg-white p-6 rounded-lg w-96">
