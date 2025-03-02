@@ -1,14 +1,17 @@
-import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
-import DashboardPage from './components/main/DashboardPage';
-import { ProtectedRoute } from './components/common/ProtectedRoute';
-import { AuthRoute } from './components/common/AuthRoute';
-import { LoginForm } from './components/auth/LoginForm';
-import { RegisterForm } from './components/auth/RegisterForm';
-import { CreateUserForm } from './components/auth/CreateUserForm';
-import { UserManagement } from './components/auth/UserManagement';
-import Layout from './components/common/Layout';
+import DashboardPage from './features/main/DashboardPage';
+import { ProtectedRoute } from './config/ProtectedRoute';
+import { AuthRoute } from './config/AuthRoute';
+import { LoginForm } from './features/auth/LoginForm';
+import { RegisterForm } from './features/auth/RegisterForm';
+import { CreateUserForm } from './features/auth/CreateUserForm';
+import { UserManagement } from './features/auth/UserManagement';
+import Layout from './features/common/Layout';
 import './styles/styles.css';
+import EventsPage from './features/events/EventsPage';
+import TouristSitesPage from './features/touristSites/TouristSitesPage';
+import GastronomyPage from './features/gastronomy/GastronomyPage';
 
 export default function App() {
   return (
@@ -27,6 +30,9 @@ export default function App() {
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/createUser" element={<CreateUserForm />} />
               <Route path="/userManagement" element={<UserManagement />} />
+              <Route path="/events" element={<EventsPage />} />
+              <Route path="/touristSites" element={<TouristSitesPage />} />
+              <Route path="/gastronomy" element={<GastronomyPage />} />
             </Route>
           </Route>
 
