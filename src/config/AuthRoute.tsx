@@ -1,6 +1,7 @@
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../contexts/AuthContext';
 import { Navigate, Outlet } from 'react-router-dom';
-import { LoadingScreen } from './LoadingScreen';
+import { LoadingScreen } from '../features/common/LoadingScreen';
+
 
 export const AuthRoute = () => {
   const { isAuthenticated, isLoading } = useAuth();
