@@ -27,7 +27,6 @@ interface Actividad {
   actiestaStr: string;
 }
 
-// Interfaz de datos de eventos para el componente
 interface EventData {
   eventName: string;
   eventDate: string;

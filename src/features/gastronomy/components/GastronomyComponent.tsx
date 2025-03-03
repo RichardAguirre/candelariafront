@@ -35,12 +35,11 @@ const GastronomyComponent: React.FC<RestaurantProps> = ({ images, name, rating, 
     setCurrentRating(newRating);
   };
 
-  // Imagen de respaldo en caso de que la URL no sea válida
   const fallbackImage = "https://via.placeholder.com/400x300/cccccc/666666?text=Imagen+no+disponible";
 
   return (
-    <div className="flex flex-col md:flex-row mx-auto mt-4 shadow-lg rounded-lg overflow-hidden h-64">
-      <div className="relative w-full md:w-1/2 h-full">
+    <div className="flex flex-col shadow-lg rounded-lg overflow-hidden h-96 w-full bg-white">
+      <div className="relative h-48 w-full overflow-hidden">
         <img
           src={images[currentIndex] || fallbackImage}
           alt={`${name} - Imagen ${currentIndex + 1}`}
@@ -69,9 +68,10 @@ const GastronomyComponent: React.FC<RestaurantProps> = ({ images, name, rating, 
           </>
         )}
       </div>
-      <div className="w-full md:w-1/2 p-4 bg-white h-full flex flex-col justify-between">
+
+      <div className="flex-grow p-4 flex flex-col justify-between">
         <div>
-          <h2 className="text-lg font-semibold">{name}</h2>
+          <h2 className="text-lg font-semibold text-gray-800 line-clamp-1">{name}</h2>
           <div className="flex items-center mb-2">
             {[...Array(5)].map((_, i) => (
               <svg
@@ -86,11 +86,12 @@ const GastronomyComponent: React.FC<RestaurantProps> = ({ images, name, rating, 
               </svg>
             ))}
           </div>
-          <p className="text-sm text-gray-600">{cuisine}</p>
-          <p className="text-sm text-gray-600">{hours}</p>
+          <p className="text-sm text-gray-600 line-clamp-1">{cuisine}</p>
+          <p className="text-sm text-gray-600 line-clamp-1">{hours}</p>
           <p className="text-sm text-gray-600 mt-2 line-clamp-2">{summary}</p>
         </div>
-        <div className="mt-2 flex items-center justify-center space-x-4">
+        
+        <div className="mt-4 flex items-center justify-center space-x-4 border-t pt-2">
           <a
             href={facebookUrl || '#'}
             target="_blank"

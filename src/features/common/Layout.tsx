@@ -11,7 +11,7 @@ const Layout: React.FC = () => {
   return (
     <div className="min-h-screen flex overflow-hidden">
       {showSidebar && <Sidebar />}
-      <div className={`flex-1 ${showSidebar ? 'ml-64' : ''}`}> {/* Ajustar el margen izquierdo para el contenido principal */}
+      <div className={`flex-1 ${showSidebar ? 'ml-64' : ''}`}>
         <nav className="fixed top-0 left-0 right-0 bg-gray-800/90 backdrop-blur-sm border-b border-gray-700/30 z-50">
           <div className="container mx-auto px-4 py-3">
             <div className="flex justify-end space-x-6">
@@ -43,7 +43,7 @@ const Layout: React.FC = () => {
           </div>
         </nav>
 
-        <main className="pt-20 pb-8 h-full overflow-y-auto"> {/* Permitir scroll vertical */}
+        <main className="pt-20 pb-8 h-full overflow-y-auto">
           <Outlet />
         </main>
       </div>

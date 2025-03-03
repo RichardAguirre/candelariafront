@@ -5,7 +5,6 @@ import { useNavigate, Link } from "react-router-dom";
 import candelaria from "../../assets/images/Candelaria.jpg";
 import { useState } from "react";
 
-// Interfaces
 interface LoginFormData {
   username: string;
   password: string;
