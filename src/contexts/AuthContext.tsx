@@ -1,7 +1,9 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
 interface User {
   username: string;
+  documento: number | null;
+  perfil: string | null;
 }
 
 interface AuthContextType {
@@ -13,21 +15,30 @@ interface AuthContextType {
   logout: () => void;
 }
 
-const AuthContext = createContext<AuthContextType>({} as AuthContextType);
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: ReactNode }) {
+interface AuthProviderProps {
+  children: ReactNode;
+}
+
+export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [user, setUser] = useState<User | null>(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
-      setUser(JSON.parse(storedUser));
-      setIsAuthenticated(true);
+      try {
+        const parsedUser = JSON.parse(storedUser);
+        setUser(parsedUser);
+        setIsAuthenticated(true);
+      } catch (err) {
+        console.error('Error parsing stored user:', err);
+        localStorage.removeItem('user');
+      }
     }
-    setIsLoading(false);
   }, []);
 
   const login = async (username: string, password: string) => {
@@ -35,26 +46,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setError(null);
     
     try {
-      const response = await fetch('/api/api/v1/acceso/validaAcceso', {
-        method: 'POST',
+      const response = await fetch("/api/api/v1/acceso/validaAcceso", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ username, password }),
       });
 
       if (!response.ok) {
-        throw new Error('Credenciales inválidas');
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Credenciales inválidas");
       }
 
-      const userData = { username };
-      setUser(userData);
+      const userData = await response.json();
+      
+      const userInfo: User = {
+        username: userData.username,
+        documento: userData.documento?.documento || null,
+        perfil: userData.perfil || null,
+      };
+
+      setUser(userInfo);
       setIsAuthenticated(true);
-      localStorage.setItem('user', JSON.stringify(userData));
+      localStorage.setItem('user', JSON.stringify(userInfo));
       
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error en el login');
-      setIsAuthenticated(false);
+      const errorMessage = err instanceof Error ? err.message : "Error de conexión";
+      setError(errorMessage);
+      console.error("Error en el login:", err);
     } finally {
       setIsLoading(false);
     }
@@ -66,20 +86,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem('user');
   };
 
-  return (
-    <AuthContext.Provider 
-      value={{ 
-        isAuthenticated, 
-        user, 
-        login, 
-        logout,
-        isLoading,
-        error
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
-  );
-}
+  const value = {
+    isAuthenticated,
+    user,
+    isLoading,
+    error,
+    login,
+    logout,
+  };
 
-export const useAuth = () => useContext(AuthContext);
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+};
+
+export const useAuth = (): AuthContextType => {
+  const context = useContext(AuthContext);
+  
+  if (context === undefined) {
+    throw new Error('useAuth debe ser usado dentro de un AuthProvider');
+  }
+  
+  return context;
+};

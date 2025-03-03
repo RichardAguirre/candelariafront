@@ -45,25 +45,14 @@ export const LoginForm = () => {
     try {
       setLocalError("");
       
-      const response = await fetch("/api/api/v1/acceso/validaAcceso", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          username: data.username.trim(),
-          password: data.password
-        }),
-      });
-
-      const responseData = await response.json();
+      // Usar el método login del contexto de autenticación
+      // en lugar de hacer la llamada directa a la API
+      await login(data.username.trim(), data.password);
       
-      if (!response.ok) {
-        throw new Error(responseData.message || "Credenciales inválidas");
+      // Si no hay errores, navegar al dashboard
+      if (!authError) {
+        navigate("/dashboard");
       }
-
-      await login(data.username, data.password);
-      navigate("/dashboard");
       
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Error de conexión";
@@ -118,7 +107,6 @@ export const LoginForm = () => {
 
       setResetSuccess(true);
       alert(`La nueva contraseña ha sido enviada a tu correo registrado`);
-      /* alert(`La nueva contraseña ha sido enviada a ${userData.email}`); */
   
       setTimeout(() => {
         setShowResetModal(false);

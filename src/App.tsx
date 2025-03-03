@@ -12,6 +12,7 @@ import './styles/styles.css';
 import EventsPage from './features/events/EventsPage';
 import TouristSitesPage from './features/touristSites/TouristSitesPage';
 import GastronomyPage from './features/gastronomy/GastronomyPage';
+import AdminPage from './features/configFeatures/ConfigPage';
 
 export default function App() {
   return (
@@ -33,6 +34,7 @@ export default function App() {
               <Route path="/events" element={<EventsPage />} />
               <Route path="/touristSites" element={<TouristSitesPage />} />
               <Route path="/gastronomy" element={<GastronomyPage />} />
+              <Route path="/adminpage" element={<AdminPage />} />
             </Route>
           </Route>
 
