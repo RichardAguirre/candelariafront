@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 
 interface EventProps {
   eventName: string;
-  eventDate: string; // ISO string
+  eventDate: string;
   location: string;
   eventInfo: string;
 }
@@ -65,7 +65,7 @@ const EventComponent: React.FC<EventProps> = ({ eventName, eventDate, location, 
   const { dayOfWeek, month, day } = formatDate(eventDate);
 
   return (
-    <div className="flex flex-col items-center p-4 bg-gray-400 rounded shadow-md">
+    <div className="mt-4 flex flex-col items-center p-4 bg-gray-400 rounded shadow-md">
       <div className="flex items-center space-x-2 mb-4">
         {renderTimeUnit(timeLeft.days, 'Días')}
         <div className="text-xl text-black font-bold">:</div>
