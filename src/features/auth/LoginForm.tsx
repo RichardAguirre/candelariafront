@@ -45,11 +45,8 @@ export const LoginForm = () => {
     try {
       setLocalError("");
       
-      // Usar el método login del contexto de autenticación
-      // en lugar de hacer la llamada directa a la API
       await login(data.username.trim(), data.password);
       
-      // Si no hay errores, navegar al dashboard
       if (!authError) {
         navigate("/dashboard");
       }
