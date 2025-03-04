@@ -6,13 +6,13 @@ import { AuthRoute } from './config/AuthRoute';
 import { LoginForm } from './features/auth/LoginForm';
 import { RegisterForm } from './features/auth/RegisterForm';
 import { CreateUserForm } from './features/auth/CreateUserForm';
-import { UserManagement } from './features/auth/UserManagement';
 import Layout from './features/common/Layout';
 import './styles/styles.css';
 import EventsPage from './features/events/EventsPage';
 import TouristSitesPage from './features/touristSites/TouristSitesPage';
 import GastronomyPage from './features/gastronomy/GastronomyPage';
 import AdminPage from './features/configFeatures/ConfigPage';
+import UserManagementManager from './features/auth/userManagement/UserManagementManager';
 
 export default function App() {
   return (
@@ -30,7 +30,7 @@ export default function App() {
             <Route element={<Layout />}>
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/createUser" element={<CreateUserForm />} />
-              <Route path="/userManagement" element={<UserManagement />} />
+              <Route path="/userManagement" element={<UserManagementManager />} />
               <Route path="/events" element={<EventsPage />} />
               <Route path="/touristSites" element={<TouristSitesPage />} />
               <Route path="/gastronomy" element={<GastronomyPage />} />
