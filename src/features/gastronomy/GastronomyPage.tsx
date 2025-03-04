@@ -148,7 +148,7 @@ const GastronomyPage: React.FC = () => {
   ];
 
   return (
-    <div className="p-4">
+    <div className="ml-8 p-4">
       <h1 className="text-4xl font-bold text-center mb-8 text-white">
         Gastronomía Candelaria Valle
       </h1>
