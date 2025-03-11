@@ -1,4 +1,10 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from "react";
 
 interface User {
   username: string;
@@ -28,15 +34,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const storedUser = localStorage.getItem('user');
+    const storedUser = localStorage.getItem("user");
     if (storedUser) {
       try {
         const parsedUser = JSON.parse(storedUser);
         setUser(parsedUser);
         setIsAuthenticated(true);
       } catch (err) {
-        console.error('Error parsing stored user:', err);
-        localStorage.removeItem('user');
+        console.error("Error parsing stored user:", err);
+        localStorage.removeItem("user");
       }
     }
   }, []);
@@ -44,14 +50,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const login = async (username: string, password: string) => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
-      const response = await fetch("/api/api/v1/acceso/validaAcceso", {
+      const response = await fetch("/api/api/v1/usuario/validaAcceso", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ usuario: username, contrasena: password }),
       });
 
       if (!response.ok) {
@@ -60,19 +66,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
 
       const userData = await response.json();
-      
+
       const userInfo: User = {
-        username: userData.username,
-        documento: userData.documento?.documento || null,
-        perfil: userData.perfil || null,
+        username: userData.usuario,
+        documento: userData.documento || null,
+        perfil: userData.idperfil?.nombreperfil || null,
       };
 
       setUser(userInfo);
       setIsAuthenticated(true);
-      localStorage.setItem('user', JSON.stringify(userInfo));
-      
+      localStorage.setItem("user", JSON.stringify(userInfo));
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Error de conexión";
+      const errorMessage =
+        err instanceof Error ? err.message : "Error de conexión";
       setError(errorMessage);
       console.error("Error en el login:", err);
     } finally {
@@ -83,7 +89,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const logout = () => {
     setUser(null);
     setIsAuthenticated(false);
-    localStorage.removeItem('user');
+    localStorage.removeItem("user");
   };
 
   const value = {
@@ -100,10 +106,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
 export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
-  
   if (context === undefined) {
-    throw new Error('useAuth debe ser usado dentro de un AuthProvider');
+    throw new Error("useAuth debe ser usado dentro de un AuthProvider");
   }
-  
   return context;
 };

@@ -71,16 +71,16 @@ const UserManagementForm: React.FC<UserManagementFormProps> = ({
         />
       </div>
 
-      {/* Email */}
+      {/* Correo */}
       <div>
-        <label className="block text-gray-700 mb-1">Email *</label>
+        <label className="block text-gray-700 mb-1">Correo *</label>
         <input
           type="email"
-          {...register('email', { required: 'El email es requerido' })}
+          {...register('correo', { required: 'El correo es requerido' })}
           className="w-full px-3 py-2 border text-black border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-          placeholder="Email"
+          placeholder="Correo"
         />
-        {errors.email && <p className="text-red-500 text-sm">{errors.email.message}</p>}
+        {errors.correo && <p className="text-red-500 text-sm">{errors.correo.message}</p>}
       </div>
 
       {/* Celular */}
@@ -103,6 +103,30 @@ const UserManagementForm: React.FC<UserManagementFormProps> = ({
           type="date"
           className="w-full px-3 py-2 border text-black border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
         />
+      </div>
+
+      {/* Usuario */}
+      <div>
+        <label className="block text-gray-700 mb-1">Usuario *</label>
+        <input
+          type="text"
+          {...register('usuario', { required: 'El usuario es requerido' })}
+          className="w-full px-3 py-2 border text-black border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+          placeholder="Usuario"
+        />
+        {errors.usuario && <p className="text-red-500 text-sm">{errors.usuario.message}</p>}
+      </div>
+
+      {/* Contraseña */}
+      <div>
+        <label className="block text-gray-700 mb-1">Contraseña *</label>
+        <input
+          type="password"
+          {...register('contrasena', { required: 'La contraseña es requerida' })}
+          className="w-full px-3 py-2 border text-black border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+          placeholder="Contraseña"
+        />
+        {errors.contrasena && <p className="text-red-500 text-sm">{errors.contrasena.message}</p>}
       </div>
 
       {/* Botones de acción */}

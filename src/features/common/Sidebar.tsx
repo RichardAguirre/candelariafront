@@ -35,6 +35,11 @@ const Sidebar: React.FC<SidebarProps> = ({ isDashboard }) => {
               </Link>
             </li>
             <li>
+              <Link to="/hotels" className="block py-2 px-4 hover:bg-blue-800 rounded">
+                Hoteles
+              </Link>
+            </li>
+            <li>
               <Link to="/adminpage" className="block py-2 px-4 hover:bg-blue-800 rounded">
                 Adminsitrar contenido
               </Link>

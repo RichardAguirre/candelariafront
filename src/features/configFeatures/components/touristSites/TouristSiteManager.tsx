@@ -9,7 +9,7 @@ import {
   fetchSitiosTuristicos,
   createSitioTuristico,
   updateSitioTuristico,
-  inactivateSitioTuristico,
+  cambiarEstadoSitioTuristico,
 } from "./services/TouristSiteService";
 
 const TouristSiteManager: React.FC = () => {
@@ -33,7 +33,7 @@ const TouristSiteManager: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await fetchSitiosTuristicos();
+      const data = await fetchSitiosTuristicos(null);
       setSitios(data);
     } catch (err) {
       setError(
@@ -98,20 +98,26 @@ const TouristSiteManager: React.FC = () => {
     setMode("edit");
   };
 
-  const handleInactivate = async (turicodi: number) => {
+  const handleToggleStatus = async (turicodi: number, activate: boolean) => {
     try {
+      const action = activate ? "activar" : "inactivar";
+      if (!confirm(`¿Estás seguro de que deseas ${action} este sitio turístico?`)) {
+        return;
+      }
+      
       setLoading(true);
       setError(null);
-      await inactivateSitioTuristico(turicodi);
-      setSuccess("Sitio turístico inactivado con éxito");
-      loadSitiosTuristicos();
+      
+      await cambiarEstadoSitioTuristico(turicodi, activate ? 1 : 0);
+      setSuccess(`Sitio turístico ${action}ado con éxito`);
+      
+      await loadSitiosTuristicos();
     } catch (err) {
+      const action = activate ? "activar" : "inactivar";
       setError(
-        err instanceof Error
-          ? err.message
-          : "Error al inactivar el sitio turístico"
+        err instanceof Error ? err.message : `Error al ${action} el sitio turístico`
       );
-      console.error("Error al inactivar sitio turístico:", err);
+      console.error(`Error al ${action} sitio turístico:`, err);
     } finally {
       setLoading(false);
     }
@@ -119,97 +125,100 @@ const TouristSiteManager: React.FC = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      {success && (
-        <div
-          className="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-4 relative"
-          role="alert"
-        >
-          <p>{success}</p>
-          <button
-            className="absolute top-0 right-0 mt-2 mr-2 text-green-700 font-bold"
-            onClick={() => setSuccess(null)}
+      
+      <div className="bg-white rounded-lg shadow-lg p-6">
+        {success && (
+          <div
+            className="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-4 relative"
+            role="alert"
           >
-            ✕
-          </button>
-        </div>
-      )}
-
-      {error && (
-        <div
-          className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4 relative"
-          role="alert"
-        >
-          <p>{error}</p>
-          <button
-            className="absolute top-0 right-0 mt-2 mr-2 text-red-700 font-bold"
-            onClick={() => setError(null)}
-          >
-            ✕
-          </button>
-        </div>
-      )}
-
-      {mode === "list" && (
-        <>
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-2xl text-black font-semibold">
-              Sitios Turísticos
-            </h2>
+            <p>{success}</p>
             <button
-              onClick={() => {
-                setMode("create");
-                formMethods.reset();
-                setImageUrls([""]);
-              }}
-              className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+              className="absolute top-0 right-0 mt-2 mr-2 text-green-700 font-bold"
+              onClick={() => setSuccess(null)}
             >
-              + Nuevo Sitio Turístico
+              ✕
             </button>
           </div>
+        )}
 
-          {loading ? (
-            <div className="flex justify-center my-4">
-              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-purple-500"></div>
+        {error && (
+          <div
+            className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4 relative"
+            role="alert"
+          >
+            <p>{error}</p>
+            <button
+              className="absolute top-0 right-0 mt-2 mr-2 text-red-700 font-bold"
+              onClick={() => setError(null)}
+            >
+              ✕
+            </button>
+          </div>
+        )}
+
+        {mode === "list" && (
+          <>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-2xl text-black font-semibold">
+                Sitios Turísticos
+              </h2>
+              <button
+                onClick={() => {
+                  setMode("create");
+                  formMethods.reset({});
+                  setImageUrls([""]);
+                }}
+                className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+              >
+                + Nuevo Sitio Turístico
+              </button>
             </div>
-          ) : (
-            <TouristSiteList
-              sitios={sitios}
-              loading={loading}
-              onEdit={handleEdit}
-              onInactivate={handleInactivate}
-            />
-          )}
-        </>
-      )}
 
-      {mode !== "list" && (
-        <TouristSiteForm
-          formMethods={formMethods}
-          mode={mode}
-          sitios={sitios}
-          imageUrls={imageUrls}
-          onSubmit={handleCreateOrUpdate}
-          onAddImageUrlField={() => setImageUrls([...imageUrls, ""])}
-          onUpdateImageUrl={(index, value) => {
-            const newUrls = [...imageUrls];
-            newUrls[index] = value;
-            setImageUrls(newUrls);
-          }}
-          onRemoveImageUrl={(index) => {
-            if (imageUrls.length > 1) {
-              const newUrls = imageUrls.filter((_, i) => i !== index);
+            {loading ? (
+              <div className="flex justify-center my-4">
+                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-purple-500"></div>
+              </div>
+            ) : (
+              <TouristSiteList
+                sitios={sitios}
+                loading={loading}
+                onEdit={handleEdit}
+                onToggleStatus={handleToggleStatus}
+              />
+            )}
+          </>
+        )}
+
+        {mode !== "list" && (
+          <TouristSiteForm
+            formMethods={formMethods}
+            mode={mode}
+            sitios={sitios}
+            imageUrls={imageUrls}
+            onSubmit={handleCreateOrUpdate}
+            onAddImageUrlField={() => setImageUrls([...imageUrls, ""])}
+            onUpdateImageUrl={(index, value) => {
+              const newUrls = [...imageUrls];
+              newUrls[index] = value;
               setImageUrls(newUrls);
-            }
-          }}
-          onCancel={() => {
-            setMode("list");
-            setSelectedSitio(null);
-            formMethods.reset();
-            setImageUrls([""]);
-          }}
-          loading={loading}
-        />
-      )}
+            }}
+            onRemoveImageUrl={(index) => {
+              if (imageUrls.length > 1) {
+                const newUrls = imageUrls.filter((_, i) => i !== index);
+                setImageUrls(newUrls);
+              }
+            }}
+            onCancel={() => {
+              setMode("list");
+              setSelectedSitio(null);
+              formMethods.reset();
+              setImageUrls([""]);
+            }}
+            loading={loading}
+          />
+        )}
+      </div>
     </div>
   );
 };

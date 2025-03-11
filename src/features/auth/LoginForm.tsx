@@ -15,8 +15,8 @@ interface ResetPasswordData {
 }
 
 interface UserResponse {
-  email: string;
-  documento: number;
+  correo: string;
+  usuario: string;
 }
 
 export const LoginForm = () => {
@@ -76,27 +76,17 @@ export const LoginForm = () => {
       if (!userResponse.ok) throw new Error("Documento no registrado");
   
       const userData: UserResponse = await userResponse.json();
-      setUserEmail(userData.email);
+      setUserEmail(userData.correo);
   
-      const usernameResponse = await fetch("/api/api/v1/acceso/datosAcceso", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ documento: data.documento }),
-      });
-  
-      if (!usernameResponse.ok) throw new Error("No se pudo obtener el username");
-  
-      const usernameData: { username: string } = await usernameResponse.json();
-      
       const newPassword = generateRandomPassword();
   
-      const resetResponse = await fetch("/api/api/v1/acceso/olvidoPassword", {
+      const resetResponse = await fetch("/api/api/v1/usuario/olvidoPassword", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          username: usernameData.username,
-          password: newPassword,
-          documento: { email: userData.email }
+          usuario: userData.usuario,
+          contrasena: newPassword,
+          correo: userData.correo
         }),
       });
   

@@ -6,5 +6,10 @@ module.exports = {
   theme: {
     extend: {},
   },
+  experimental: {
+    optimizeUniversalDefaults: true,
+    oklch: false,
+    disableColorOpacityUtilities: true
+  },
   plugins: [],
 }

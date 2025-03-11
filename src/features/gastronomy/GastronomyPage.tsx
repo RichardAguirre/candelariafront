@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import GastronomyComponent from "./components/GastronomyComponent";
+import { useAuth } from "../../contexts/AuthContext";
 
 interface User {
   documento: number | null;
@@ -15,27 +16,30 @@ interface User {
 
 interface TipoCalificacion {
   tipocodi: number | null;
-  tiponomb: string;
+  tiponomb: string | null;
+  tiponombStr?: any;
 }
 
 interface Calificacion {
-  calicodi: number;
-  califech: string;
+  calicodi: number | null;
+  califech: string | null;
   caliuser: User;
   tipocodi: TipoCalificacion;
-  caliobse: string;
+  caliobse: string | null;
+  gastcodi: Gastronomia;
+  promedio?: number;
 }
 
 interface Gastronomia {
   gastcodi: number;
-  gastnomb: string;
-  gastdesc: string;
-  gastimag: string;
-  gastface: string;
-  gasturlx: string;
-  gastinst: string;
-  gastesta: number;
-  gastestaStr: string;
+  gastnomb: string | null;
+  gastdesc: string | null;
+  gastimag: string | null;
+  gastface: string | null;
+  gasturlx: string | null;
+  gastinst: string | null;
+  gastesta: number | null;
+  gastestaStr: string | null;
 }
 
 interface GastronomiaCalificacion {
@@ -45,6 +49,7 @@ interface GastronomiaCalificacion {
 }
 
 interface RestaurantData {
+  gastcodi: number;
   images: string[];
   name: string;
   rating: number;
@@ -60,53 +65,203 @@ const GastronomyPage: React.FC = () => {
   const [restaurants, setRestaurants] = useState<RestaurantData[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [userRatings, setUserRatings] = useState<number[]>([]);
+  const { user } = useAuth();
+
+  const fetchUserRatings = async (documento: number) => {
+    try {
+      const response = await fetch("/api/api/v1/calificacion/listaCalificacionByDocumento", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ caliuser: { documento } }),
+      });
+      
+      if (!response.ok) {
+        console.error("Error al obtener calificaciones del usuario:", response.status);
+        return [];
+      }
+      
+      const text = await response.text();
+      if (!text) return [];
+      
+      try {
+        const data = JSON.parse(text);
+        return data.map((item: any) => item.gastcodi.gastcodi);
+      } catch (err) {
+        console.error("Error al parsear calificaciones:", err);
+        return [];
+      }
+    } catch (err) {
+      console.error("Error en fetchUserRatings:", err);
+      return [];
+    }
+  };
+
+  const submitRating = async (gastcodi: number, rating: number, comment: string) => {
+    if (!user?.documento) {
+      alert("Necesitas iniciar sesión para calificar");
+      return false;
+    }
+
+    try {
+      const response = await fetch("/api/api/v1/calificacion/crearCalificacion", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          caliuser: { documento: user.documento },
+          tipocodi: { tipocodi: rating },
+          caliobse: comment,
+          gastcodi: { gastcodi }
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error al enviar calificación: ${response.status}`);
+      }
+
+      setUserRatings(prev => [...prev, gastcodi]);
+      
+      await fetchPromedioAndUpdateRestaurant(gastcodi);
+      
+      return true;
+    } catch (err) {
+      console.error("Error al enviar calificación:", err);
+      return false;
+    }
+  };
+
+  const fetchPromedioAndUpdateRestaurant = async (gastcodi: number) => {
+    try {
+      const newRating = await fetchPromedioCalificacion(gastcodi);
+      setRestaurants(prevRestaurants =>
+        prevRestaurants.map(r => 
+          r.gastcodi === gastcodi ? { ...r, rating: newRating } : r
+        )
+      );
+    } catch (err) {
+      console.error("Error al actualizar promedio:", err);
+    }
+  };
+
+  const fetchPromedioCalificacion = async (
+    gastcodi: number
+  ): Promise<number> => {
+    try {
+      const response = await fetch(
+        "/api/api/v1/calificacion/getPromedioCalificacion",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ gastcodi }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Error HTTP: ${response.status}`);
+      }
+
+      const text = await response.text();
+      if (!text || text.trim() === "") {
+        console.log(`Respuesta vacía para gastcodi ${gastcodi}`);
+        return 0;
+      }
+
+      try {
+        const data = JSON.parse(text);
+        return data.promedio ?? 0;
+      } catch (parseError) {
+        console.error(
+          `Error al parsear respuesta para gastcodi ${gastcodi}:`,
+          text
+        );
+        return 0;
+      }
+    } catch (err) {
+      console.error("Error al cargar promedio:", err);
+      return 0;
+    }
+  };
 
   useEffect(() => {
-    const fetchGastronomy = async () => {
+    const loadAllData = async () => {
       try {
         setIsLoading(true);
         
-        const response = await fetch("/api/api/v1/gastronomia/consultaAllGastronomia", {
+        await fetchRestaurants();
+        
+        if (user?.documento) {
+          const userRatedItems = await fetchUserRatings(user.documento);
+          setUserRatings(userRatedItems);
+        }
+      } catch (err) {
+        console.error("Error al cargar datos:", err);
+        setError(err instanceof Error ? err.message : "Error al cargar datos");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadAllData();
+  }, [user]);
+
+  const fetchRestaurants = async () => {
+    try {
+      const response = await fetch(
+        "/api/api/v1/gastronomia/consultaAllGastronomia",
+        {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ gastesta: 1 }),
-        });
-
-        if (!response.ok) {
-          throw new Error(`Error al obtener gastronomía: ${response.status}`);
         }
+      );
 
-        const gastronomiaData: GastronomiaCalificacion[] = await response.json();
-        console.log("Datos recibidos de gastronomía:", gastronomiaData);
-        
-        const transformedData: RestaurantData[] = gastronomiaData.map(item => {
-          let ratingNum = 5;
-          try {
-            const ratingStr = item.calicodi.tipocodi.tiponomb;
-            ratingNum = parseInt(ratingStr, 10);
-            if (isNaN(ratingNum) || ratingNum < 1 || ratingNum > 5) {
-              ratingNum = 5;
-            }
-          } catch (e) {
-            console.error("Error al parsear el rating:", e);
+      if (!response.ok) {
+        throw new Error(`Error al obtener gastronomía: ${response.status}`);
+      }
+
+      const gastronomiaData: GastronomiaCalificacion[] = await response.json();
+      console.log("Datos recibidos de gastronomía:", gastronomiaData);
+
+      const uniqueData = gastronomiaData.reduce<GastronomiaCalificacion[]>(
+        (acc, current) => {
+          if (
+            !acc.some(
+              (item) => item.gastcodi.gastcodi === current.gastcodi.gastcodi
+            )
+          ) {
+            acc.push(current);
           }
+          return acc;
+        },
+        []
+      );
 
-          const defaultImage = "https://colombia.gastronomia.com/media/cache/noticia_grande/uploads/noticias/sancocho2.aE9qc3JuUU1jT1NSbHA1ai8vMTQ4OTQ0NDA1OS8.jpg";
+      const defaultLocalImage = "src/assets/images/Gastronomia.jpg";
+
+      const loadedData: RestaurantData[] = await Promise.all(
+        uniqueData.map(async (item) => {
+          const ratingNum = await fetchPromedioCalificacion(
+            item.gastcodi.gastcodi
+          );
+
           let imageArray: string[] = [];
-          
           if (item.gastcodi.gastimag) {
-            if (item.gastcodi.gastimag.includes(',')) {
-              imageArray = item.gastcodi.gastimag.split(',');
+            if (item.gastcodi.gastimag.includes(",")) {
+              imageArray = item.gastcodi.gastimag.split(",");
             } else {
               imageArray = [item.gastcodi.gastimag];
             }
+            if (!imageArray[0].startsWith("http")) {
+              imageArray = [defaultLocalImage];
+            }
           } else {
-            imageArray = [defaultImage];
+            imageArray = [defaultLocalImage];
           }
 
           return {
+            gastcodi: item.gastcodi.gastcodi,
             images: imageArray,
             name: item.gastcodi.gastnomb || "Sin nombre",
             rating: ratingNum,
@@ -117,25 +272,24 @@ const GastronomyPage: React.FC = () => {
             xUrl: item.gastcodi.gasturlx || "",
             instagramUrl: item.gastcodi.gastinst || "",
           };
-        });
+        })
+      );
 
-        setRestaurants(transformedData);
-
-      } catch (err) {
-        console.error("Error al cargar gastronomía:", err);
-        setError(err instanceof Error ? err.message : "Error al cargar gastronomía");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchGastronomy();
-  }, []);
-
+      setRestaurants(loadedData);
+    } catch (err) {
+      console.error("Error al cargar gastronomía:", err);
+      setError(
+        err instanceof Error ? err.message : "Error al cargar gastronomía"
+      );
+    }
+  };
 
   const fallbackRestaurants = [
     {
-      images: ["https://via.placeholder.com/400x300/cccccc/666666?text=Cargando..."],
+      gastcodi: 0,
+      images: [
+        "https://via.placeholder.com/400x300/cccccc/666666?text=Cargando...",
+      ],
       name: "Cargando restaurantes...",
       rating: 5,
       cuisine: "Gastronomía local",
@@ -144,17 +298,17 @@ const GastronomyPage: React.FC = () => {
       facebookUrl: "",
       xUrl: "",
       instagramUrl: "",
-    }
+    },
   ];
 
   return (
-    <div className="ml-8 p-4">
-      <h1 className="text-4xl font-bold text-center mb-8 text-white">
+    <div className="ml-24 p-4 min-h-screen">
+      <h1 className="text-4xl font-bold text-center mb-8 text-white w-full">
         Gastronomía Candelaria Valle
       </h1>
-      
+
       {isLoading && (
-        <div className="flex justify-center items-center py-12">
+        <div className="flex justify-center items-center w-full py-12">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white"></div>
         </div>
       )}
@@ -165,11 +319,12 @@ const GastronomyPage: React.FC = () => {
         </div>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
         {!isLoading && !error && restaurants.length > 0 ? (
-          restaurants.map((restaurant, index) => (
+          restaurants.map((restaurant) => (
             <GastronomyComponent
-              key={index}
+              key={restaurant.gastcodi}
+              gastcodi={restaurant.gastcodi}
               images={restaurant.images}
               name={restaurant.name}
               rating={restaurant.rating}
@@ -179,14 +334,16 @@ const GastronomyPage: React.FC = () => {
               facebookUrl={restaurant.facebookUrl}
               xUrl={restaurant.xUrl}
               instagramUrl={restaurant.instagramUrl}
+              userDocumento={user?.documento || null}
+              alreadyRated={userRatings.includes(restaurant.gastcodi)}
+              onSubmitRating={submitRating}
             />
           ))
-        ) : isLoading ? (
-          null
-        ) : error ? (
-          fallbackRestaurants.map((restaurant, index) => (
+        ) : isLoading ? null : error ? (
+          fallbackRestaurants.map((restaurant) => (
             <GastronomyComponent
-              key={index}
+              key={restaurant.gastcodi}
+              gastcodi={restaurant.gastcodi}
               images={restaurant.images}
               name={restaurant.name}
               rating={restaurant.rating}
@@ -196,6 +353,9 @@ const GastronomyPage: React.FC = () => {
               facebookUrl={restaurant.facebookUrl}
               xUrl={restaurant.xUrl}
               instagramUrl={restaurant.instagramUrl}
+              userDocumento={null}
+              alreadyRated={false}
+              onSubmitRating={() => Promise.resolve(false)}
             />
           ))
         ) : (

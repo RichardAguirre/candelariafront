@@ -5,14 +5,14 @@ interface EventListProps {
   actividades: Actividad[];
   loading: boolean;
   onEdit: (actividad: Actividad) => void;
-  onInactivate: (acticodi: number) => void;
+  onToggleStatus: (acticodi: number, activate: boolean) => void;
 }
 
 const EventList: React.FC<EventListProps> = ({
   actividades,
   loading,
   onEdit,
-  onInactivate,
+  onToggleStatus,
 }) => {
   if (actividades.length === 0 && !loading) {
     return (
@@ -81,10 +81,14 @@ const EventList: React.FC<EventListProps> = ({
                   Editar
                 </button>
                 <button
-                  onClick={() => onInactivate(actividad.acticodi)}
-                  className="text-red-600 hover:text-red-800"
+                  onClick={() => onToggleStatus(actividad.acticodi, actividad.actiesta !== 1)}
+                  className={`${
+                    actividad.actiesta === 1
+                      ? "text-red-600 hover:text-red-800"
+                      : "text-green-600 hover:text-green-800"
+                  }`}
                 >
-                  Inactivar
+                  {actividad.actiesta === 1 ? "Inactivar" : "Activar"}
                 </button>
               </td>
             </tr>

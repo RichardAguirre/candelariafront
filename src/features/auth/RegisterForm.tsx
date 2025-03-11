@@ -9,12 +9,12 @@ interface RegisterFormData {
   nombredos: string;
   apellidouno: string;
   apellidodos: string;
-  email: string;
+  correo: string;
   fechanac: string;
   celular: string;
   documento: string;
-  username: string;
-  password: string;
+  usuario: string;
+  contrasena: string;
   confirmPassword: string;
 }
 
@@ -35,18 +35,19 @@ export const RegisterForm = () => {
       setIsLoading(true);
 
       const userData = {
+        documento: parseInt(data.documento, 10),
         nombreuno: data.nombreuno,
         nombredos: data.nombredos,
         apellidouno: data.apellidouno,
         apellidodos: data.apellidodos,
-        email: data.email,
+        correo: data.correo,
         fechanac: data.fechanac,
         celular: parseInt(data.celular, 10),
-        documento: parseInt(data.documento, 10),
-        fechasys: new Date().toISOString().split('.')[0]
+        usuario: data.usuario,
+        contrasena: data.contrasena,
       };
 
-      const userResponse = await fetch("/api/api/v1/usuario/crearUsuario", {
+      const response = await fetch("/api/api/v1/usuario/crearUsuario", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -54,30 +55,14 @@ export const RegisterForm = () => {
         body: JSON.stringify(userData),
       });
 
-      if (!userResponse.ok) {
-        const errorData = await userResponse.json();
+      if (!response.ok) {
+        const errorData = await response.json();
         throw new Error(errorData.message || "Error al crear el usuario");
       }
 
-      const accessData = {
-        documento: {
-          documento: parseInt(data.documento, 10)
-        },
-        username: data.username,
-        password: data.password
-      };
-
-      const accessResponse = await fetch("/api/api/v1/acceso/crearAccesoUsuario", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(accessData),
-      });
-
-      if (!accessResponse.ok) {
-        const errorData = await accessResponse.json();
-        throw new Error(errorData.message || "Error al crear las credenciales");
+      const result = await response.json();
+      if (result !== 1) {
+        throw new Error("Error al crear el usuario");
       }
 
       alert("¡Registro exitoso!");
@@ -137,19 +122,19 @@ export const RegisterForm = () => {
             </div>
 
             <div>
-              <label className="block text-gray-700 mb-0.5">Email*</label>
+              <label className="block text-gray-700 mb-0.5">Correo*</label>
               <input
-                {...register("email", { 
+                {...register("correo", { 
                   required: "Campo requerido",
                   pattern: {
                     value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                    message: "Email inválido"
+                    message: "Correo inválido"
                   }
                 })}
                 type="email"
                 className="w-full p-2 border border-gray-300 rounded-md text-black"
               />
-              {errors.email && <span className="text-red-500 text-sm">{errors.email.message}</span>}
+              {errors.correo && <span className="text-red-500 text-sm">{errors.correo.message}</span>}
             </div>
 
             <div>
@@ -199,16 +184,16 @@ export const RegisterForm = () => {
             <div>
               <label className="block text-gray-700 mb-0.5">Nombre de Usuario*</label>
               <input
-                {...register("username", { required: "Campo requerido" })}
+                {...register("usuario", { required: "Campo requerido" })}
                 className="w-full p-2 border border-gray-300 rounded-md text-black"
               />
-              {errors.username && <span className="text-red-500 text-sm">{errors.username.message}</span>}
+              {errors.usuario && <span className="text-red-500 text-sm">{errors.usuario.message}</span>}
             </div>
 
             <div>
               <label className="block text-gray-700 mb-0.5">Contraseña*</label>
               <input
-                {...register("password", {
+                {...register("contrasena", {
                   required: "Campo requerido",
                   minLength: { value: 8, message: "Mínimo 8 caracteres" },
                   pattern: {
@@ -219,14 +204,14 @@ export const RegisterForm = () => {
                 type="password"
                 className="w-full p-2 border border-gray-300 rounded-md text-black"
               />
-              {errors.password && <span className="text-red-500 text-sm">{errors.password.message}</span>}
+              {errors.contrasena && <span className="text-red-500 text-sm">{errors.contrasena.message}</span>}
             </div>
 
             <div>
               <label className="block text-gray-700 mb-0.5">Confirmar Contraseña*</label>
               <input
                 {...register("confirmPassword", {
-                  validate: value => value === watch("password") || "Las contraseñas no coinciden"
+                  validate: value => value === watch("contrasena") || "Las contraseñas no coinciden"
                 })}
                 type="password"
                 className="w-full p-2 border border-gray-300 rounded-md text-black"

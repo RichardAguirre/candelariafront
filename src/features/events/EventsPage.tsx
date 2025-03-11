@@ -88,7 +88,7 @@ const EventsPage: React.FC = () => {
   ];
 
   return (
-    <div className="EventsPage ml-24 p-4">
+    <div className="ml-4 p-4 min-h-screen">
       <h1 className="text-4xl font-bold text-center mb-8 text-white">Eventos y actividades Candelaria Valle</h1>
       
       {isLoading && (

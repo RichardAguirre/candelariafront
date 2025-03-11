@@ -33,7 +33,7 @@ const GastronomyForm: React.FC<GastronomyFormProps> = ({
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      <h2 className="text-xl font-semibold mb-4">
+      <h2 className="text-xl text-black font-semibold mb-4">
         {mode === "create" ? "Crear Nueva Gastronomía" : "Editar Gastronomía"}
       </h2>
 

@@ -21,6 +21,7 @@ export interface Actividad {
   actiface: string;
   actiurlx: string;
   actiinst: string;
+  actiestaStr?: string;
 }
 
 export interface ActividadFormData {
@@ -35,16 +36,63 @@ export interface ActividadFormData {
   actiinst: string;
 }
 
-export async function fetchActividades(): Promise<Actividad[]> {
+/**
+ * Obtiene todas las actividades según su estado
+ * @param estado - Estado de las actividades a consultar (1: activas, 0: inactivas, null: todas)
+ */
+export async function fetchActividades(
+  estado: 1 | 0 | null = 1
+): Promise<Actividad[]> {
+  if (estado === null) {
+    try {
+      const [activasResponse, inactivasResponse] = await Promise.all([
+        fetch("/api/api/v1/actividad/consultaAllActividad", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ actiesta: 1 }),
+        }),
+        fetch("/api/api/v1/actividad/consultaAllActividad", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ actiesta: 0 }),
+        })
+      ]);
+      
+      if (!activasResponse.ok) {
+        const errorData = await activasResponse.json().catch(() => ({}));
+        throw new Error(`Error al cargar actividades activas: ${activasResponse.status} - ${JSON.stringify(errorData)}`);
+      }
+      
+      if (!inactivasResponse.ok) {
+        const errorData = await inactivasResponse.json().catch(() => ({}));
+        throw new Error(`Error al cargar actividades inactivas: ${inactivasResponse.status} - ${JSON.stringify(errorData)}`);
+      }
+      
+      const [activas, inactivas] = await Promise.all([
+        activasResponse.json(),
+        inactivasResponse.json()
+      ]);
+      
+      return [...activas, ...inactivas];
+    } catch (error) {
+      console.error("Error al cargar ambos tipos de actividades:", error);
+      throw error;
+    }
+  }
+  
   const response = await fetch("/api/api/v1/actividad/consultaAllActividad", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ actiesta: 1 }),
+    body: JSON.stringify({ actiesta: estado }),
   });
+
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    throw new Error(`Error al cargar actividades: ${response.status} - ${JSON.stringify(errorData)}`);
+    throw new Error(
+      `Error al cargar actividades: ${response.status} - ${JSON.stringify(errorData)}`
+    );
   }
+
   return response.json();
 }
 
@@ -83,7 +131,7 @@ export async function createActividad(
     const imageUrlsString = imageUrls
       .filter((url) => url.trim() !== "")
       .join(",");
-    
+
     const requestBody = {
       actinomb: data.actinomb.trim(),
       actidesc: data.actidesc.trim(),
@@ -94,23 +142,26 @@ export async function createActividad(
       actifefi: formatDate(data.actifefi),
       actiface: (data.actiface || "").trim(),
       actiurlx: (data.actiurlx || "").trim(),
-      actiinst: (data.actiinst || "").trim()
+      actiinst: (data.actiinst || "").trim(),
     };
-    
-    console.log("Enviando datos al servidor:", JSON.stringify(requestBody, null, 2));
+
+    console.log(
+      "Enviando datos al servidor:",
+      JSON.stringify(requestBody, null, 2)
+    );
 
     const response = await fetch("/api/api/v1/actividad/crearActividad", {
       method: "POST",
-      headers: { 
+      headers: {
         "Content-Type": "application/json",
-        "Accept": "application/json"
+        Accept: "application/json",
       },
       body: JSON.stringify(requestBody),
     });
 
     const responseText = await response.text();
     console.log("Respuesta raw del servidor:", responseText);
-    
+
     if (!response.ok) {
       let errorData;
       try {
@@ -118,9 +169,13 @@ export async function createActividad(
       } catch (e) {
         errorData = { message: responseText };
       }
-      throw new Error(`Error al crear actividad: ${response.status} - ${JSON.stringify(errorData)}`);
+      throw new Error(
+        `Error al crear actividad: ${response.status} - ${JSON.stringify(
+          errorData
+        )}`
+      );
     }
-    
+
     console.log("Actividad creada exitosamente");
   } catch (error) {
     console.error("Error en createActividad:", error);
@@ -136,46 +191,80 @@ export async function updateActividad(
   if (!selectedActividad) {
     throw new Error("No se ha seleccionado una actividad para editar");
   }
-  
+
+  const formatDate = (dateString: string) => {
+    if (dateString.length === 16) {
+      return dateString + ":00";
+    }
+    return dateString;
+  };
+
   const imageUrlsString = imageUrls
     .filter((url) => url.trim() !== "")
     .join(",");
-  
+
   const requestBody = {
-    acticodi: selectedActividad.acticodi,
-    actinomb: data.actinomb,
-    actidesc: data.actidesc,
+    actinomb: data.actinomb.trim(),
+    actidesc: data.actidesc.trim(),
     actiimag: imageUrlsString,
     evencodi: { evencodi: data.evencodiValue },
     ubiccodi: { ubiccodi: data.ubiccodiValue },
-    actifein: data.actifein,
-    actifefi: data.actifefi,
-    actiface: data.actiface || "",
-    actiurlx: data.actiurlx || "",
-    actiinst: data.actiinst || "",
+    actifein: formatDate(data.actifein),
+    actifefi: formatDate(data.actifefi),
+    actiface: data.actiface?.trim() || "",
+    actiurlx: data.actiurlx?.trim() || "",
+    actiinst: data.actiinst?.trim() || "",
+    acticodi: selectedActividad.acticodi,
   };
-  
-  console.log("Enviando datos de actualización:", requestBody);
+
+  console.log("Enviando datos de actualización:", JSON.stringify(requestBody, null, 2));
 
   const response = await fetch("/api/api/v1/actividad/modificarActividad", {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(requestBody),
   });
-  
+
+  const rawResponse = await response.text();
+  console.log("Respuesta cruda del servidor:", rawResponse);
+
   if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(`Error al actualizar actividad: ${response.status} - ${JSON.stringify(errorData)}`);
+    let errorData = {};
+    try {
+      errorData = JSON.parse(rawResponse);
+    } catch {
+    }
+    throw new Error(
+      `Error al actualizar la actividad: ${
+        response.status
+      } - ${JSON.stringify(errorData)}`
+    );
   }
+
+  console.log("Actividad actualizada con éxito");
 }
 
-export async function inactivateActividad(acticodi: number): Promise<void> {
-  const response = await fetch("/api/api/v1/actividad/inactivarActividad", {
+
+/**
+ * Nuevo Nombre: inactivateActividad
+ * @param acticodi - Código de la actividad
+ * @param estado - Estado deseado (1: activo, 0: inactivo)
+ */
+export async function cambiarEstadoActividad(
+  acticodi: number,
+  estado: 0 | 1
+): Promise<void> {
+  const response = await fetch("/api/api/v1/actividad/cambiarEstadoActividad", {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ acticodi }),
+    body: JSON.stringify({
+      acticodi,
+      actiesta: estado,
+    }),
   });
+
   if (!response.ok) {
-    throw new Error(`Error al inactivar actividad: ${response.status}`);
+    const accion = estado === 1 ? "activar" : "inactivar";
+    throw new Error(`Error al ${accion} actividad: ${response.status}`);
   }
 }

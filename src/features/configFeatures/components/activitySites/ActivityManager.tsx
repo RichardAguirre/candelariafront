@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
+import EventForm from "./ActivityForm";
+import EventList from "./ActivityList";
 import {
   Actividad,
   ActividadFormData,
@@ -8,134 +10,87 @@ import {
   fetchUbicaciones,
   createActividad,
   updateActividad,
-  inactivateActividad,
+  cambiarEstadoActividad,
   Evento,
-  Ubicacion
+  Ubicacion,
 } from "./services/ActivityService";
-import EventList from "./ActivityList";
-import EventForm from "./ActivityForm";
+import ActivityReport from "./ActivityReport";
 
 const EventManager: React.FC = () => {
   const [actividades, setActividades] = useState<Actividad[]>([]);
   const [eventos, setEventos] = useState<Evento[]>([]);
   const [ubicaciones, setUbicaciones] = useState<Ubicacion[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [mode, setMode] = useState<"list" | "create" | "edit">("list");
-  const [selectedActividad, setSelectedActividad] = useState<Actividad | null>(null);
+  const [selectedActividad, setSelectedActividad] = useState<Actividad | null>(
+    null
+  );
   const [imageUrls, setImageUrls] = useState<string[]>([""]);
+  const [showReport, setShowReport] = useState(false);
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    reset,
-    setValue,
-  } = useForm<ActividadFormData>();
+  const formMethods = useForm<ActividadFormData>();
+  const { reset } = formMethods;
 
-  useEffect(() => {
-    const loadData = async () => {
-      setLoading(true);
-      setError(null);
-      
-      try {
-        const [actividadesData, eventosData, ubicacionesData] = await Promise.all([
-          fetchActividades(),
-          fetchEventos(),
-          fetchUbicaciones()
-        ]);
-        
-        setActividades(actividadesData);
-        setEventos(eventosData);
-        setUbicaciones(ubicacionesData);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Error al cargar los datos");
-        console.error("Error al cargar datos:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    loadData();
-  }, []);
-
-  const handleCreate = async (data: ActividadFormData) => {
+  const loadActividades = async () => {
     try {
       setLoading(true);
-      setError(null);
-      
-      const fechaInicio = new Date(data.actifein);
-      const fechaFin = new Date(data.actifefi);
-      
-      if (fechaFin < fechaInicio) {
-        throw new Error("La fecha de fin no puede ser anterior a la fecha de inicio");
-      }
-      
-      const urlPattern = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([\/\w .-]*)*\/?$/;
-      const validUrls = imageUrls.filter(url => url.trim() !== "");
-      
-      for (const url of validUrls) {
-        if (!urlPattern.test(url)) {
-          throw new Error(`La URL no es válida: ${url}`);
-        }
-      }
-      
-      await createActividad(data, imageUrls);
-      setSuccess("Actividad creada con éxito");
-      setMode("list");
-      
-      const actividadesData = await fetchActividades();
+      const actividadesData = await fetchActividades(null);
       setActividades(actividadesData);
-      
-      reset();
-      setImageUrls([""]);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al crear la actividad");
-      console.error("Error al crear actividad:", err);
+      setError(
+        err instanceof Error ? err.message : "Error al cargar actividades"
+      );
+      console.error("Error al cargar actividades:", err);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleUpdate = async (data: ActividadFormData) => {
-    try {
-      if (!selectedActividad) {
-        throw new Error("No se ha seleccionado una actividad para editar");
+  useEffect(() => {
+    const fetchInitialData = async () => {
+      try {
+        setLoading(true);
+
+        const [eventosData, ubicacionesData] = await Promise.all([
+          fetchEventos(),
+          fetchUbicaciones(),
+        ]);
+
+        setEventos(eventosData);
+        setUbicaciones(ubicacionesData);
+
+        await loadActividades();
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : "Error al cargar datos iniciales"
+        );
+        console.error("Error al cargar datos iniciales:", err);
+      } finally {
+        setLoading(false);
       }
-      
+    };
+
+    fetchInitialData();
+  }, []);
+
+  const handleCreateSubmit = async (data: ActividadFormData) => {
+    try {
       setLoading(true);
       setError(null);
-      
-      const fechaInicio = new Date(data.actifein);
-      const fechaFin = new Date(data.actifefi);
-      
-      if (fechaFin < fechaInicio) {
-        throw new Error("La fecha de fin no puede ser anterior a la fecha de inicio");
-      }
-      
-      const urlPattern = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([\/\w .-]*)*\/?$/;
-      const validUrls = imageUrls.filter(url => url.trim() !== "");
-      
-      for (const url of validUrls) {
-        if (!urlPattern.test(url)) {
-          throw new Error(`La URL no es válida: ${url}`);
-        }
-      }
-      
-      await updateActividad(data, selectedActividad, imageUrls);
-      setSuccess("Actividad actualizada con éxito");
+
+      await createActividad(data, imageUrls);
+      setSuccess("Actividad creada con éxito");
+
       setMode("list");
-      
-      const actividadesData = await fetchActividades();
-      setActividades(actividadesData);
-      
-      setSelectedActividad(null);
       reset();
       setImageUrls([""]);
+
+      await loadActividades();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al actualizar la actividad");
-      console.error("Error al actualizar actividad:", err);
+      setError(err instanceof Error ? err.message : "Error al crear actividad");
+      console.error("Error al crear actividad:", err);
     } finally {
       setLoading(false);
     }
@@ -143,148 +98,208 @@ const EventManager: React.FC = () => {
 
   const handleEdit = (actividad: Actividad) => {
     setSelectedActividad(actividad);
+
+    const imageUrlsList = actividad.actiimag
+      ? actividad.actiimag.split(",")
+      : [""];
+    setImageUrls(imageUrlsList);
+
     reset({
       actinomb: actividad.actinomb,
       actidesc: actividad.actidesc,
       evencodiValue: actividad.evencodi.evencodi,
       ubiccodiValue: actividad.ubiccodi.ubiccodi,
-      actifein: actividad.actifein,
-      actifefi: actividad.actifefi,
-      actiface: actividad.actiface || "",
-      actiurlx: actividad.actiurlx || "",
-      actiinst: actividad.actiinst || "",
+      actifein: actividad.actifein.slice(0, 16),
+      actifefi: actividad.actifefi.slice(0, 16),
+      actiface: actividad.actiface,
+      actiurlx: actividad.actiurlx,
+      actiinst: actividad.actiinst,
     });
-    
-    if (actividad.actiimag) {
-      const urls = actividad.actiimag.split(",");
-      setImageUrls(urls.length > 0 ? urls : [""]);
-    } else {
-      setImageUrls([""]);
-    }
-    
+
     setMode("edit");
   };
 
-  const handleInactivate = async (acticodi: number) => {
+  const handleEditSubmit = async (data: ActividadFormData) => {
     try {
-      if (!confirm("¿Estás seguro de que deseas inactivar esta actividad?")) {
-        return;
-      }
-      
+      if (!selectedActividad) return;
+
       setLoading(true);
       setError(null);
-      
-      await inactivateActividad(acticodi);
-      setSuccess("Actividad inactivada con éxito");
-      
-      const actividadesData = await fetchActividades();
-      setActividades(actividadesData);
+
+      await updateActividad(data, selectedActividad, imageUrls);
+      setSuccess("Actividad actualizada con éxito");
+
+      setMode("list");
+      setSelectedActividad(null);
+      reset();
+      setImageUrls([""]);
+
+      await loadActividades();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al inactivar la actividad");
-      console.error("Error al inactivar actividad:", err);
+      setError(
+        err instanceof Error ? err.message : "Error al actualizar actividad"
+      );
+      console.error("Error al actualizar actividad:", err);
     } finally {
       setLoading(false);
     }
   };
 
-  const addImageUrlField = () => {
+  const handleToggleActivityStatus = async (
+    acticodi: number,
+    activate: boolean
+  ) => {
+    try {
+      const action = activate ? "activar" : "inactivar";
+      if (!confirm(`¿Estás seguro de que deseas ${action} esta actividad?`)) {
+        return;
+      }
+
+      setLoading(true);
+      setError(null);
+
+      await cambiarEstadoActividad(acticodi, activate ? 1 : 0);
+      setSuccess(`Actividad ${action}ada con éxito`);
+
+      await loadActividades();
+    } catch (err) {
+      const action = activate ? "activar" : "inactivar";
+      setError(
+        err instanceof Error ? err.message : `Error al ${action} la actividad`
+      );
+      console.error(`Error al ${action} actividad:`, err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAddImageUrlField = () => {
     setImageUrls([...imageUrls, ""]);
   };
 
-  const updateImageUrl = (index: number, value: string) => {
+  const handleUpdateImageUrl = (index: number, value: string) => {
     const newUrls = [...imageUrls];
     newUrls[index] = value;
     setImageUrls(newUrls);
   };
 
-  const removeImageUrl = (index: number) => {
-    if (imageUrls.length > 1) {
-      const newUrls = imageUrls.filter((_, i) => i !== index);
-      setImageUrls(newUrls);
-    }
+  const handleRemoveImageUrl = (index: number) => {
+    if (imageUrls.length <= 1) return;
+    const newUrls = imageUrls.filter((_, i) => i !== index);
+    setImageUrls(newUrls);
+  };
+
+  const handleCancel = () => {
+    setMode("list");
+    setSelectedActividad(null);
+    setImageUrls([""]);
+    reset();
+  };
+
+  const dismissAlert = () => {
+    setSuccess(null);
+    setError(null);
   };
 
   return (
     <div className="container mx-auto px-4 py-8">
-      {success && (
-        <div
-          className="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-4 relative"
-          role="alert"
-        >
-          <p>{success}</p>
-          <button
-            className="absolute top-0 right-0 mt-2 mr-2 text-green-700 font-bold"
-            onClick={() => setSuccess(null)}
-          >
-            ✕
-          </button>
-        </div>
-      )}
-
-      {error && (
-        <div
-          className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4 relative"
-          role="alert"
-        >
-          <p>{error}</p>
-          <button
-            className="absolute top-0 right-0 mt-2 mr-2 text-red-700 font-bold"
-            onClick={() => setError(null)}
-          >
-            ✕
-          </button>
-        </div>
-      )}
-
-      {mode === "list" && (
-        <>
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-2xl text-black font-semibold">Actividades</h2>
+      <div className="bg-white rounded-lg shadow-lg p-6">
+        {success && (
+          <div className="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-4 relative">
+            <p>{success}</p>
             <button
-              onClick={() => {
-                setMode("create");
-                reset();
-                setImageUrls([""]);
-              }}
-              className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+              className="absolute top-0 right-0 mt-2 mr-2 text-green-700 font-bold"
+              onClick={dismissAlert}
             >
-              + Nueva Actividad
+              ✕
             </button>
           </div>
+        )}
 
-          {loading ? (
-            <div className="flex justify-center my-4">
-              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-purple-500"></div>
+        {error && (
+          <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4 relative">
+            <p>{error}</p>
+            <button
+              className="absolute top-0 right-0 mt-2 mr-2 text-red-700 font-bold"
+              onClick={dismissAlert}
+            >
+              ✕
+            </button>
+          </div>
+        )}
+
+        {mode === "list" && (
+          <>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-2xl font-semibold text-black">
+                Eventos y Actividades
+              </h2>
+              <div className="flex space-x-2">
+                <button
+                  onClick={() => setShowReport(true)}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                >
+                  Generar Reporte
+                </button>
+                <button
+                  onClick={() => {
+                    setMode("create");
+                    formMethods.reset({});
+                    setImageUrls([""]);
+                  }}
+                  className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+                >
+                  + Nueva Actividad
+                </button>
+              </div>
             </div>
-          ) : (
+
             <EventList
               actividades={actividades}
               loading={loading}
               onEdit={handleEdit}
-              onInactivate={handleInactivate}
+              onToggleStatus={handleToggleActivityStatus}
             />
-          )}
-        </>
-      )}
+          </>
+        )}
 
-      {mode !== "list" && (
-        <EventForm
-          formMethods={{ register, handleSubmit, formState: { errors }, reset }}
-          mode={mode}
-          eventos={eventos}
-          ubicaciones={ubicaciones}
-          imageUrls={imageUrls}
-          onSubmit={mode === "create" ? handleCreate : handleUpdate}
-          onAddImageUrlField={addImageUrlField}
-          onUpdateImageUrl={updateImageUrl}
-          onRemoveImageUrl={removeImageUrl}
-          onCancel={() => {
-            setMode("list");
-            setSelectedActividad(null);
-            reset();
-            setImageUrls([""]);
-          }}
-          loading={loading}
+        {mode === "create" && (
+          <EventForm
+            formMethods={formMethods}
+            mode="create"
+            eventos={eventos}
+            ubicaciones={ubicaciones}
+            imageUrls={imageUrls}
+            onSubmit={handleCreateSubmit}
+            onAddImageUrlField={handleAddImageUrlField}
+            onUpdateImageUrl={handleUpdateImageUrl}
+            onRemoveImageUrl={handleRemoveImageUrl}
+            onCancel={handleCancel}
+            loading={loading}
+          />
+        )}
+
+        {mode === "edit" && selectedActividad && (
+          <EventForm
+            formMethods={formMethods}
+            mode="edit"
+            eventos={eventos}
+            ubicaciones={ubicaciones}
+            imageUrls={imageUrls}
+            onSubmit={handleEditSubmit}
+            onAddImageUrlField={handleAddImageUrlField}
+            onUpdateImageUrl={handleUpdateImageUrl}
+            onRemoveImageUrl={handleRemoveImageUrl}
+            onCancel={handleCancel}
+            loading={loading}
+          />
+        )}
+      </div>
+
+      {showReport && (
+        <ActivityReport 
+          actividades={actividades} 
+          onClose={() => setShowReport(false)} 
         />
       )}
     </div>

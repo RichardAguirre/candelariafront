@@ -141,7 +141,7 @@ const TouristSitesPage: React.FC = () => {
   ];
 
   return (
-    <div className="TouristSitesComponent ml-10 p-4">
+    <div className="ml-24 p-4 min-h-screen">
       <h1 className="text-4xl font-bold text-center mb-8 text-white">Sitios turísticos Candelaria Valle</h1>
       
       {isLoading && (

@@ -15,6 +15,7 @@ const Layout: React.FC = () => {
     "/activities",
     "/touristSites",
     "/gastronomy",
+    "/hotels",
     "/adminpage",
     "/userManagement",
   ].includes(location.pathname);

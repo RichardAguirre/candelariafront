@@ -6,7 +6,7 @@ import {
   fetchGastronomias,
   createGastronomia,
   updateGastronomia,
-  inactivateGastronomia,
+  cambiarEstadoGastronomia,
 } from "./services/GastronomyService";
 import GastronomyList from "./GastronomyList";
 import GastronomyForm from "./GastronomyForm";
@@ -21,30 +21,26 @@ const GastronomyManager: React.FC = () => {
     useState<Gastronomia | null>(null);
   const [imageUrls, setImageUrls] = useState<string[]>([""]);
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    reset,
-    setValue,
-  } = useForm<GastronomiaFormData>();
+  const formMethods = useForm<GastronomiaFormData>();
+  const { reset } = formMethods;
+
+  const loadGastronomias = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const gastronomiasData = await fetchGastronomias(null);
+      setGastronomias(gastronomiasData);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Error al cargar los datos"
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const loadData = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const gastronomiasData = await fetchGastronomias(1);
-        setGastronomias(gastronomiasData);
-      } catch (err) {
-        setError(
-          err instanceof Error ? err.message : "Error al cargar los datos"
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadData();
+    loadGastronomias();
   }, []);
 
   const handleCreate = async (data: GastronomiaFormData) => {
@@ -54,10 +50,9 @@ const GastronomyManager: React.FC = () => {
       await createGastronomia(data, imageUrls);
       setSuccess("Gastronomía creada con éxito");
       setMode("list");
-      const gastronomiasData = await fetchGastronomias(1);
-      setGastronomias(gastronomiasData);
       reset();
       setImageUrls([""]);
+      await loadGastronomias();
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Error al crear la gastronomía"
@@ -77,11 +72,10 @@ const GastronomyManager: React.FC = () => {
       await updateGastronomia(data, selectedGastronomia, imageUrls);
       setSuccess("Gastronomía actualizada con éxito");
       setMode("list");
-      const gastronomiasData = await fetchGastronomias(1);
-      setGastronomias(gastronomiasData);
       setSelectedGastronomia(null);
       reset();
       setImageUrls([""]);
+      await loadGastronomias();
     } catch (err) {
       setError(
         err instanceof Error
@@ -111,20 +105,24 @@ const GastronomyManager: React.FC = () => {
     setMode("edit");
   };
 
-  const handleInactivate = async (gastcodi: number) => {
+  const handleToggleStatus = async (gastcodi: number, activate: boolean) => {
     try {
-      if (!confirm("¿Estás seguro de que deseas inactivar esta gastronomía?")) {
+      const action = activate ? "activar" : "inactivar";
+      if (!confirm(`¿Estás seguro de que deseas ${action} esta gastronomía?`)) {
         return;
       }
+      
       setLoading(true);
       setError(null);
-      await inactivateGastronomia(gastcodi);
-      setSuccess("Gastronomía inactivada con éxito");
-      const gastronomiasData = await fetchGastronomias(1);
-      setGastronomias(gastronomiasData);
+      
+      await cambiarEstadoGastronomia(gastcodi, activate ? 1 : 0);
+      setSuccess(`Gastronomía ${action}ada con éxito`);
+      
+      await loadGastronomias();
     } catch (err) {
+      const action = activate ? "activar" : "inactivar";
       setError(
-        err instanceof Error ? err.message : "Error al inactivar la gastronomía"
+        err instanceof Error ? err.message : `Error al ${action} la gastronomía`
       );
     } finally {
       setLoading(false);
@@ -150,85 +148,88 @@ const GastronomyManager: React.FC = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      {success && (
-        <div
-          className="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-4 relative"
-          role="alert"
-        >
-          <p>{success}</p>
-          <button
-            className="absolute top-0 right-0 mt-2 mr-2 text-green-700 font-bold"
-            onClick={() => setSuccess(null)}
+      
+      <div className="bg-white rounded-lg shadow-lg p-6">
+        {success && (
+          <div
+            className="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-4 relative"
+            role="alert"
           >
-            ✕
-          </button>
-        </div>
-      )}
-
-      {error && (
-        <div
-          className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4 relative"
-          role="alert"
-        >
-          <p>{error}</p>
-          <button
-            className="absolute top-0 right-0 mt-2 mr-2 text-red-700 font-bold"
-            onClick={() => setError(null)}
-          >
-            ✕
-          </button>
-        </div>
-      )}
-
-      {mode === "list" && (
-        <>
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-2xl text-black font-semibold">Gastronomías</h2>
+            <p>{success}</p>
             <button
-              onClick={() => {
-                setMode("create");
-                reset();
-                setImageUrls([""]);
-              }}
-              className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+              className="absolute top-0 right-0 mt-2 mr-2 text-green-700 font-bold"
+              onClick={() => setSuccess(null)}
             >
-              + Nueva Gastronomía
+              ✕
             </button>
           </div>
+        )}
 
-          {loading ? (
-            <div className="flex justify-center my-4">
-              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-purple-500"></div>
+        {error && (
+          <div
+            className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4 relative"
+            role="alert"
+          >
+            <p>{error}</p>
+            <button
+              className="absolute top-0 right-0 mt-2 mr-2 text-red-700 font-bold"
+              onClick={() => setError(null)}
+            >
+              ✕
+            </button>
+          </div>
+        )}
+
+        {mode === "list" && (
+          <>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-2xl text-black font-semibold">Gastronomías</h2>
+              <button
+                onClick={() => {
+                  setMode("create");
+                  formMethods.reset({});
+                  setImageUrls([""]);
+                }}
+                className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+              >
+                + Nueva Gastronomía
+              </button>
             </div>
-          ) : (
-            <GastronomyList
-              gastronomias={gastronomias}
-              loading={loading}
-              onEdit={handleEdit}
-              onInactivate={handleInactivate}
-            />
-          )}
-        </>
-      )}
 
-      {mode !== "list" && (
-        <GastronomyForm
-          formMethods={{ register, handleSubmit, formState: { errors }, reset }}
-          mode={mode}
-          imageUrls={imageUrls}
-          onSubmit={mode === "create" ? handleCreate : handleUpdate}
-          onAddImageUrlField={addImageUrlField}
-          onUpdateImageUrl={updateImageUrl}
-          onRemoveImageUrl={removeImageUrl}
-          onCancel={() => {
-            setMode("list");
-            setSelectedGastronomia(null);
-            reset();
-            setImageUrls([""]);
-          }}
-          loading={loading}
-        />
-      )}
+            {loading ? (
+              <div className="flex justify-center my-4">
+                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-purple-500"></div>
+              </div>
+            ) : (
+              <GastronomyList
+                gastronomias={gastronomias}
+                loading={loading}
+                onEdit={handleEdit}
+                onToggleStatus={handleToggleStatus}
+              />
+            )}
+          </>
+        )}
+
+        {mode !== "list" && (
+          <GastronomyForm
+            formMethods={formMethods}
+            mode={mode}
+            imageUrls={imageUrls}
+            onSubmit={mode === "create" ? handleCreate : handleUpdate}
+            onAddImageUrlField={addImageUrlField}
+            onUpdateImageUrl={updateImageUrl}
+            onRemoveImageUrl={removeImageUrl}
+            onCancel={() => {
+              setMode("list");
+              setSelectedGastronomia(null);
+              reset();
+              setImageUrls([""]);
+            }}
+            loading={loading}
+          />
+        )}
+      </div>
     </div>
   );
 };

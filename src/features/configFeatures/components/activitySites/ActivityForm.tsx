@@ -1,6 +1,6 @@
 import React from "react";
 import { UseFormReturn } from "react-hook-form";
-import { ActividadFormData, Actividad, Evento, Ubicacion } from "./services/ActivityService";
+import { ActividadFormData, Evento, Ubicacion } from "./services/ActivityService";
 
 interface EventFormProps {
   formMethods: UseFormReturn<ActividadFormData>;
@@ -37,7 +37,7 @@ const EventForm: React.FC<EventFormProps> = ({
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      <h2 className="text-xl font-semibold mb-4">
+      <h2 className="text-xl text-black font-semibold mb-4">
         {mode === "create" ? "Crear Nueva Actividad" : "Editar Actividad"}
       </h2>
 

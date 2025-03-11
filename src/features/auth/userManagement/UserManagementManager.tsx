@@ -4,7 +4,6 @@ import {
   User,
   fetchUsers,
   updateUser,
-  updateUserCredentials,
   toggleUserStatus,
 } from "./services/UserManagementService";
 import UserManagementList from "./UserManagementList";
@@ -16,13 +15,10 @@ const UserManagementManager: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [mode, setMode] = useState<"list" | "edit" | "credentials" | "create">(
-    "list"
-  );
+  const [mode, setMode] = useState<"list" | "edit" | "create">("list");
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
   const formMethods = useForm<User>();
-  const credentialMethods = useForm<{ username?: string; password: string }>();
 
   const loadUsers = async () => {
     try {
@@ -66,37 +62,6 @@ const UserManagementManager: React.FC = () => {
     }
   };
 
-  const handleEditCredentials = (user: User) => {
-    setSelectedUser(user);
-    credentialMethods.reset({ username: user.username, password: "" });
-    setMode("credentials");
-  };
-
-  const handleUpdateCredentials = async (data: {
-    username?: string;
-    password: string;
-  }) => {
-    if (!selectedUser) return;
-    try {
-      setLoading(true);
-      await updateUserCredentials(
-        selectedUser.documento,
-        data.username,
-        data.password
-      );
-      setSuccess("Credenciales actualizadas con éxito");
-      setMode("list");
-      loadUsers();
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Error actualizando credenciales"
-      );
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const onToggleUserStatus = async (user: User) => {
     try {
       setLoading(true);
@@ -121,7 +86,6 @@ const UserManagementManager: React.FC = () => {
     setMode("list");
     setSelectedUser(null);
     formMethods.reset();
-    credentialMethods.reset();
   };
 
   const handleCreateSuccess = () => {
@@ -212,74 +176,8 @@ const UserManagementManager: React.FC = () => {
                 loading={loading}
                 mode="edit"
               />
-              <div className="mt-4">
-                <button
-                  onClick={() => {
-                    handleEditCredentials(selectedUser);
-                  }}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-                >
-                  Editar Credenciales
-                </button>
-              </div>
             </div>
           </>
-        )}
-
-        {mode === "credentials" && selectedUser && (
-          <div className="bg-white rounded-lg">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-2xl text-black font-semibold">
-                Editar Credenciales
-              </h2>
-            </div>
-            <form
-              onSubmit={credentialMethods.handleSubmit(handleUpdateCredentials)}
-              className="space-y-4"
-            >
-              <div>
-                <label className="block text-gray-700 mb-1">Username</label>
-                <input
-                  type="text"
-                  {...credentialMethods.register("username")}
-                  className="w-full px-3 py-2 border text-black border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  placeholder="Nombre de usuario"
-                />
-              </div>
-              <div>
-                <label className="block text-gray-700 mb-1">Password *</label>
-                <input
-                  type="password"
-                  {...credentialMethods.register("password", {
-                    required: "La contraseña es requerida",
-                  })}
-                  className="w-full px-3 py-2 border text-black border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  placeholder="Contraseña"
-                />
-                {credentialMethods.formState.errors.password && (
-                  <p className="text-red-500 text-sm">
-                    {credentialMethods.formState.errors.password.message}
-                  </p>
-                )}
-              </div>
-              <div className="flex justify-end space-x-2 pt-4">
-                <button
-                  type="button"
-                  onClick={handleCancel}
-                  className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 disabled:bg-purple-300"
-                >
-                  {loading ? "Guardando..." : "Guardar"}
-                </button>
-              </div>
-            </form>
-          </div>
         )}
 
         {mode === "create" && (
